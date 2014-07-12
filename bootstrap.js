@@ -15,12 +15,25 @@ let cr = Cc['@mozilla.org/chrome/chrome-registry;1'].getService(Ci["nsIChromeReg
 
 let Log = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog;
 
+const FENNEC_EVENTS = [
+  'OptionsItem:Selected',
+];
+
 // An example of how to import a helper module.
 XPCOMUtils.defineLazyGetter(this, "Helper", function() {
   let sandbox = {};
   Services.scriptloader.loadSubScript("chrome://youraddon/content/helper.js", sandbox);
   return sandbox["Helper"];
 });
+
+let observer = {
+  observe: function observe(subject, topic, data) {
+    Log.d('lol', 'Event received: ' + subject + topic + data);
+    s.play();
+  },
+};
+
+let s;
 
 function startup(data, reason) {
   switch(reason) {
@@ -33,16 +46,27 @@ function startup(data, reason) {
       break;
   }
 
-  let uri = Services.io.newURI('chrome://sound/content/clonepop.wav', null, null);
+  FENNEC_EVENTS.forEach(function (e) {
+    Services.obs.addObserver(observer, e, false);
+  });
+
+  //let uri = Services.io.newURI('chrome://sound/content/clonepop.wav', null, null);
+  /*
   let s = new Sound('chrome://sound/content/clonepop.wav', function () {
     s.play(function () {
       s.play();
       s.play();
     });
   });
+    */
+  s = new Sound('chrome://sound/content/clonepop.wav');
 }
 
-function shutdown(data, reason) {}
+function shutdown(data, reason) {
+  FENNEC_EVENTS.forEach(function (e) {
+    Services.obs.removeObserver(observer, e);
+  });
+}
 
 function install(data, reason) {}
 
